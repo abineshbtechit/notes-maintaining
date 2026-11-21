@@ -7,6 +7,8 @@ import NotesLibrary from './components/library/NotesLibrary.jsx';
 import InspectorModal from './components/InspectorModal.jsx';
 import EditNoteModal from './components/EditNoteModal.jsx';
 import NewFolderModal from './components/NewFolderModal.jsx';
+import MoveNoteModal from './components/MoveNoteModal.jsx';
+import MoveFolderModal from './components/MoveFolderModal.jsx';
 import { db } from './services/db.js';
 import { seedDefaultDataIfEmpty } from './services/sampleData.js';
 
@@ -19,6 +21,8 @@ export default function App() {
   // Modals & Overlays
   const [activeInspectorNote, setActiveInspectorNote] = useState(null);
   const [editingNote, setEditingNote] = useState(null);
+  const [movingNote, setMovingNote] = useState(null);
+  const [isMoveFolderOpen, setIsMoveFolderOpen] = useState(false);
   const [newFolderConfig, setNewFolderConfig] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -89,6 +93,8 @@ export default function App() {
             registeredFolders={folders}
             onViewNote={setActiveInspectorNote}
             onEditNote={setEditingNote}
+            onMoveNote={setMovingNote}
+            onOpenMoveFolderModal={() => setIsMoveFolderOpen(true)}
             onDeleteNote={handleDeleteNote}
             onToggleStar={handleToggleStar}
             onGoToUpload={() => setCurrentView('upload')}
@@ -107,6 +113,10 @@ export default function App() {
           setActiveInspectorNote(null);
           setEditingNote(note);
         }}
+        onMove={(note) => {
+          setActiveInspectorNote(null);
+          setMovingNote(note);
+        }}
         showToast={showToast}
       />
 
@@ -116,6 +126,23 @@ export default function App() {
         onClose={() => setEditingNote(null)}
         onSaved={refreshData}
         onOpenNewFolderModal={(type, parentFolder) => setNewFolderConfig({ type, parentFolder })}
+        showToast={showToast}
+      />
+
+      {/* Move Note Modal */}
+      <MoveNoteModal
+        note={movingNote}
+        onClose={() => setMovingNote(null)}
+        onMoved={refreshData}
+        onOpenNewFolderModal={(type, parentFolder) => setNewFolderConfig({ type, parentFolder })}
+        showToast={showToast}
+      />
+
+      {/* Move Folder / Topic Modal */}
+      <MoveFolderModal
+        isOpen={isMoveFolderOpen}
+        onClose={() => setIsMoveFolderOpen(false)}
+        onMoved={refreshData}
         showToast={showToast}
       />
 

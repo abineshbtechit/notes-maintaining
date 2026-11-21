@@ -1,7 +1,7 @@
 /**
  * IndexedDB persistence layer for React Notes Hub
  * Handles photos (base64/blobs), technical markdown text, and formulae,
- * with hierarchical Folders & Topics categorization.
+ * with hierarchical Folders & Topics categorization and full Move/Transfer operations.
  */
 const DB_NAME = 'NotesHubDB';
 const DB_VERSION = 1;
@@ -128,6 +128,112 @@ class NotesStorage {
     };
   }
 
+  // ==========================================
+  // MOVE OPERATIONS (FILES & FOLDERS)
+  // ==========================================
+
+  /**
+   * Move an individual note file to a different folder & topic
+   */
+  async moveNote(noteId, targetFolder, targetTopic) {
+    const note = await this.getNoteById(noteId);
+    if (!note) return null;
+    note.folder = targetFolder.trim();
+    note.topic = targetTopic.trim() || 'General Notes';
+    note.updatedAt = new Date().toISOString();
+    return await this.saveNote(note);
+  }
+
+  /**
+   * Move / Merge an entire folder into another folder
+   * All notes in sourceFolder are moved to targetFolder (topics preserved).
+   * Topics from sourceFolder are merged into targetFolder in the folder registry.
+   */
+  async moveFolder(sourceFolder, targetFolder) {
+    if (!sourceFolder || !targetFolder || sourceFolder === targetFolder) return false;
+
+    const allNotes = await this.getAllNotes();
+    const notesToMove = allNotes.filter(n => (n.folder || '').toLowerCase() === sourceFolder.toLowerCase());
+
+    for (const note of notesToMove) {
+      note.folder = targetFolder;
+      note.updatedAt = new Date().toISOString();
+      await this.saveNote(note);
+    }
+
+    // Merge topics in registered folders
+    const folders = this.getRegisteredFolders();
+    const sourceObj = folders.find(f => f.folder.toLowerCase() === sourceFolder.toLowerCase());
+    let targetObj = folders.find(f => f.folder.toLowerCase() === targetFolder.toLowerCase());
+
+    if (!targetObj) {
+      targetObj = { folder: targetFolder, topics: [] };
+      folders.push(targetObj);
+    }
+
+    if (sourceObj && sourceObj.topics) {
+      sourceObj.topics.forEach(t => {
+        if (!targetObj.topics.some(existing => existing.toLowerCase() === t.toLowerCase())) {
+          targetObj.topics.push(t);
+        }
+      });
+    }
+
+    // Remove sourceFolder from registry
+    const updatedFolders = folders.filter(f => f.folder.toLowerCase() !== sourceFolder.toLowerCase());
+    this.saveRegisteredFolders(updatedFolders);
+
+    return true;
+  }
+
+  /**
+   * Move a specific topic (and all its notes) from one folder to another
+   */
+  async moveTopic(sourceFolder, topicName, targetFolder, newTopicName = null) {
+    if (!sourceFolder || !topicName || !targetFolder) return false;
+    const finalTopicName = (newTopicName || topicName).trim();
+
+    const allNotes = await this.getAllNotes();
+    const notesToMove = allNotes.filter(
+      n => (n.folder || '').toLowerCase() === sourceFolder.toLowerCase() &&
+           (n.topic || '').toLowerCase() === topicName.toLowerCase()
+    );
+
+    for (const note of notesToMove) {
+      note.folder = targetFolder;
+      note.topic = finalTopicName;
+      note.updatedAt = new Date().toISOString();
+      await this.saveNote(note);
+    }
+
+    // Update folder registry
+    const folders = this.getRegisteredFolders();
+    const sourceObj = folders.find(f => f.folder.toLowerCase() === sourceFolder.toLowerCase());
+    let targetObj = folders.find(f => f.folder.toLowerCase() === targetFolder.toLowerCase());
+
+    if (!targetObj) {
+      targetObj = { folder: targetFolder, topics: [] };
+      folders.push(targetObj);
+    }
+
+    if (!targetObj.topics.some(t => t.toLowerCase() === finalTopicName.toLowerCase())) {
+      targetObj.topics.push(finalTopicName);
+    }
+
+    if (sourceObj) {
+      sourceObj.topics = sourceObj.topics.filter(t => t.toLowerCase() !== topicName.toLowerCase());
+      if (sourceObj.topics.length === 0) {
+        sourceObj.topics.push('General Notes');
+      }
+    }
+
+    this.saveRegisteredFolders(folders);
+    return true;
+  }
+
+  // ==========================================
+  // FOLDERS & TOPICS REGISTRY
+  // ==========================================
   getRegisteredFolders() {
     const defaultData = [
       {

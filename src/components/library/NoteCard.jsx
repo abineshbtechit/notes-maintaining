@@ -1,11 +1,12 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, FolderInput } from 'lucide-react';
 import MathView from '../MathView.jsx';
 
 export default function NoteCard({
   note,
   onView,
   onEdit,
+  onMove,
   onDelete,
   onToggleStar
 }) {
@@ -106,6 +107,14 @@ export default function NoteCard({
           </button>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            type="button"
+            className="btn-icon-subtle"
+            onClick={() => onMove(note)}
+            title="Move note to another folder or topic"
+          >
+            <FolderInput style={{ width: 15, height: 15, color: 'var(--primary-dark)' }} />
+          </button>
           <button
             type="button"
             className="btn-icon-subtle"

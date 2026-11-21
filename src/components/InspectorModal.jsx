@@ -1,8 +1,8 @@
 import React from 'react';
-import { Download, Pencil } from 'lucide-react';
+import { Download, Pencil, FolderInput } from 'lucide-react';
 import MathView from './MathView.jsx';
 
-export default function InspectorModal({ note, onClose, onEdit, showToast }) {
+export default function InspectorModal({ note, onClose, onEdit, onMove, showToast }) {
   if (!note) return null;
 
   const handleCopy = () => {
@@ -117,7 +117,19 @@ export default function InspectorModal({ note, onClose, onEdit, showToast }) {
         </div>
 
         <div className="modal-footer">
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn-duo-secondary"
+              onClick={() => {
+                onClose();
+                if (onMove) onMove(note);
+              }}
+              title="Move to another folder or topic"
+            >
+              <FolderInput style={{ width: 15, height: 15 }} />
+              Move Note
+            </button>
             <button
               type="button"
               className="btn-duo-secondary"

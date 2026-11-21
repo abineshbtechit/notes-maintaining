@@ -9,8 +9,10 @@ export default function NotesLibrary({
   registeredFolders,
   onViewNote,
   onEditNote,
+  onMoveNote,
   onDeleteNote,
   onToggleStar,
+  onOpenMoveFolderModal,
   onGoToUpload
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +72,7 @@ export default function NotesLibrary({
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon"><Camera style={{ color: '#0066CC)' }} /></div>
+          <div className="stat-icon"><Camera style={{ color: '#0066CC' }} /></div>
           <div>
             <div className="stat-count">{stats.photos}</div>
             <div className="stat-label">Photo Notes</div>
@@ -100,6 +102,7 @@ export default function NotesLibrary({
         selectedTopic={selectedTopic}
         onSelectFolder={setSelectedFolder}
         onSelectTopic={setSelectedTopic}
+        onOpenMoveFolderModal={onOpenMoveFolderModal}
       />
 
       {/* Controls Bar: Search & Category Chips */}
@@ -180,6 +183,7 @@ export default function NotesLibrary({
               note={note}
               onView={onViewNote}
               onEdit={onEditNote}
+              onMove={onMoveNote}
               onDelete={onDeleteNote}
               onToggleStar={onToggleStar}
             />

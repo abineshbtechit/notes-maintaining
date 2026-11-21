@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folders } from 'lucide-react';
+import { Folders, FolderSync } from 'lucide-react';
 
 export default function FolderExplorer({
   notes,
@@ -7,7 +7,8 @@ export default function FolderExplorer({
   selectedFolder,
   selectedTopic,
   onSelectFolder,
-  onSelectTopic
+  onSelectTopic,
+  onOpenMoveFolderModal
 }) {
   // Compute counts
   const folderCounts = {};
@@ -34,38 +35,52 @@ export default function FolderExplorer({
 
   return (
     <div className="folder-explorer-card">
-      {/* Breadcrumbs Bar */}
-      <div className="breadcrumbs-bar">
-        <span
-          className={`breadcrumb-item ${selectedFolder === 'all' ? 'active' : ''}`}
-          onClick={() => {
-            onSelectFolder('all');
-            onSelectTopic('all');
-          }}
+      {/* Breadcrumbs Bar with Action Button */}
+      <div className="breadcrumbs-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', whiteSpace: 'nowrap' }}>
+          <span
+            className={`breadcrumb-item ${selectedFolder === 'all' ? 'active' : ''}`}
+            onClick={() => {
+              onSelectFolder('all');
+              onSelectTopic('all');
+            }}
+          >
+            <Folders style={{ width: 15, height: 15 }} /> All Folders
+          </span>
+
+          {selectedFolder !== 'all' && (
+            <>
+              <span className="breadcrumb-separator">&gt;</span>
+              <span
+                className={`breadcrumb-item ${selectedTopic === 'all' ? 'active' : ''}`}
+                onClick={() => onSelectTopic('all')}
+              >
+                📁 {selectedFolder}
+              </span>
+            </>
+          )}
+
+          {selectedFolder !== 'all' && selectedTopic !== 'all' && (
+            <>
+              <span className="breadcrumb-separator">&gt;</span>
+              <span className="breadcrumb-item active">
+                🏷️ {selectedTopic}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Move / Merge Folders Action Trigger */}
+        <button
+          type="button"
+          className="btn-duo-secondary"
+          style={{ padding: '4px 10px', fontSize: 11, flexShrink: 0, textTransform: 'none' }}
+          onClick={onOpenMoveFolderModal}
+          title="Move or merge entire folders and topics"
         >
-          <Folders style={{ width: 15, height: 15 }} /> All Folders
-        </span>
-
-        {selectedFolder !== 'all' && (
-          <>
-            <span className="breadcrumb-separator">&gt;</span>
-            <span
-              className={`breadcrumb-item ${selectedTopic === 'all' ? 'active' : ''}`}
-              onClick={() => onSelectTopic('all')}
-            >
-              📁 {selectedFolder}
-            </span>
-          </>
-        )}
-
-        {selectedFolder !== 'all' && selectedTopic !== 'all' && (
-          <>
-            <span className="breadcrumb-separator">&gt;</span>
-            <span className="breadcrumb-item active">
-              🏷️ {selectedTopic}
-            </span>
-          </>
-        )}
+          <FolderSync style={{ width: 13, height: 13, color: 'var(--primary-dark)' }} />
+          Move Folders / Topics
+        </button>
       </div>
 
       {/* Folder Chips Row */}
