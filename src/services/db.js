@@ -40,6 +40,76 @@ class NotesStorage {
     });
   }
 
+  /**
+   * Two-way sync with server backend for multi-device port sharing (PC & Mobile)
+   */
+  async syncWithServer() {
+    try {
+      // 1. Sync Folders from Server
+      const foldersRes = await fetch('/api/folders');
+      if (foldersRes.ok) {
+        const serverFolders = await foldersRes.json();
+        if (Array.isArray(serverFolders) && serverFolders.length > 0) {
+          localStorage.setItem('notes_hub_folders', JSON.stringify(serverFolders));
+        } else {
+          // Push local registered folders to server
+          const localFolders = this.getRegisteredFolders();
+          await fetch('/api/folders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(localFolders)
+          });
+        }
+      }
+
+      // 2. Sync Notes from Server
+      const notesRes = await fetch('/api/notes');
+      if (notesRes.ok) {
+        const serverNotes = await notesRes.json();
+        if (Array.isArray(serverNotes) && serverNotes.length > 0) {
+          // Update local IndexedDB with server notes
+          for (const note of serverNotes) {
+            await this.putLocalNote(note);
+          }
+        } else {
+          // Server is empty: push local notes to server
+          const localNotes = await this.getLocalNotes();
+          if (localNotes.length > 0) {
+            await fetch('/api/notes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(localNotes)
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Backend sync unavailable, using client storage:', e);
+    }
+  }
+
+  putLocalNote(note) {
+    if (!this.db) return Promise.resolve(note);
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(note);
+      request.onsuccess = () => resolve(note);
+      request.onerror = (e) => reject(e);
+    });
+  }
+
+  getLocalNotes() {
+    if (!this.db) return Promise.resolve([]);
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = (e) => reject(e);
+    });
+  }
+
   async saveNote(note) {
     if (!this.db) await this.init();
     
@@ -52,18 +122,50 @@ class NotesStorage {
       this.registerFolder(note.folder);
     }
 
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(note);
+    // Save to local IndexedDB
+    const saved = await this.putLocalNote(note);
 
-      request.onsuccess = () => resolve(note);
-      request.onerror = (e) => reject(e);
-    });
+    // Sync to Server backend asynchronously so mobile devices immediately get it
+    fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(note)
+    }).catch(() => {});
+
+    // Sync folders to Server backend
+    fetch('/api/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(this.getRegisteredFolders())
+    }).catch(() => {});
+
+    return saved;
   }
 
   async getAllNotes() {
     if (!this.db) await this.init();
+
+    // Try fetching from server first for real-time multi-device sync
+    try {
+      const res = await fetch('/api/notes');
+      if (res.ok) {
+        const serverNotes = await res.json();
+        if (Array.isArray(serverNotes) && serverNotes.length > 0) {
+          for (const note of serverNotes) {
+            await this.putLocalNote(note);
+          }
+          serverNotes.forEach(n => {
+            if (!n.folder) n.folder = n.subject || 'General';
+            if (n.topic === undefined || n.topic === null) n.topic = '';
+          });
+          serverNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          return serverNotes;
+        }
+      }
+    } catch (e) {
+      // Offline fallback to IndexedDB
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
@@ -103,6 +205,7 @@ class NotesStorage {
 
   async deleteNote(id) {
     if (!this.db) await this.init();
+    fetch('/api/notes/' + id, { method: 'DELETE' }).catch(() => {});
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
@@ -272,6 +375,13 @@ class NotesStorage {
     try {
       localStorage.setItem('notes_hub_folders', JSON.stringify(folders));
     } catch (e) {}
+
+    // Sync to backend so any connected mobile device immediately sees new folders
+    fetch('/api/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(folders)
+    }).catch(() => {});
   }
 
   registerFolder(folderName, topicName) {

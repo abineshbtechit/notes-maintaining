@@ -44,15 +44,29 @@ export default function App() {
     setFolders(regFolders);
   }, []);
 
-  // Initialize DB & Seed Data on initial mount
+  // Initialize DB & Sync Data with Server on initial mount
   useEffect(() => {
     async function init() {
       await db.init();
+      await db.syncWithServer();
       await seedDefaultDataIfEmpty();
       await refreshData();
     }
     init();
   }, [refreshData]);
+
+  // Whenever switching views, pull fresh notes and folders from server
+  useEffect(() => {
+    if (currentView === 'library') {
+      refreshData();
+    }
+  }, [currentView, refreshData]);
+
+  // When note is saved, refresh and auto-switch to library so user immediately sees it
+  const handleNoteSaved = async () => {
+    await refreshData();
+    setCurrentView('library');
+  };
 
   // Handlers
   const handleToggleStar = async (id) => {
@@ -83,7 +97,7 @@ export default function App() {
             folders={folders}
             onOpenNewFolderModal={(type, parentFolder) => setNewFolderConfig({ type, parentFolder })}
             onViewLibrary={() => setCurrentView('library')}
-            onNoteSaved={refreshData}
+            onNoteSaved={handleNoteSaved}
             showToast={showToast}
           />
         ) : (

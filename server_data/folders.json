@@ -1,0 +1,42 @@
+[
+  {
+    "folder": "Percentages",
+    "topics": [
+      "Profit & Loss",
+      "Basic Fractions to %",
+      "Successive Percentage",
+      "Discounts & Markup"
+    ]
+  },
+  {
+    "folder": "Calculus",
+    "topics": [
+      "Vector Calculus",
+      "Limits & Derivatives",
+      "Integration Techniques",
+      "Stokes Theorem"
+    ]
+  },
+  {
+    "folder": "Computer Science",
+    "topics": [
+      "Distributed Systems",
+      "Caching & Redis",
+      "Algorithms & Data Structures"
+    ]
+  },
+  {
+    "folder": "Quantum Physics",
+    "topics": [
+      "Wave Mechanics",
+      "Schrödinger Equation",
+      "Particle in a Box"
+    ]
+  },
+  {
+    "folder": "Bioengineering",
+    "topics": [
+      "General Notes"
+    ]
+  }
+]
