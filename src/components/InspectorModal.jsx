@@ -70,6 +70,14 @@ export default function InspectorModal({ note, onClose, onEdit, showToast }) {
                 </span>
               </div>
               <div className="modal-code-viewer">{note.content}</div>
+              {note.diagramUrl && (
+                <div style={{ marginTop: 18 }}>
+                  <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Attached Whiteboard / Diagram Snapshot
+                  </h4>
+                  <img src={note.diagramUrl} className="modal-img-viewer" alt="Attached Whiteboard or Diagram" />
+                </div>
+              )}
               {note.summary && (
                 <div style={{ marginTop: 18, padding: 14, background: 'var(--surface-muted)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--primary)' }}>
                   <strong style={{ fontSize: 13, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>

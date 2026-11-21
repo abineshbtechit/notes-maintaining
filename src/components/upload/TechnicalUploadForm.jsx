@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Terminal, Check } from 'lucide-react';
+import { Terminal, Check, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
+import CameraModal from '../CameraModal.jsx';
 import { db } from '../../services/db.js';
 
 export default function TechnicalUploadForm({
@@ -15,7 +16,9 @@ export default function TechnicalUploadForm({
   const [content, setContent] = useState('');
   const [summary, setSummary] = useState('');
   const [tags, setTags] = useState('');
+  const [diagramImage, setDiagramImage] = useState(null);
   const [showLivePreview, setShowLivePreview] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
   const topics = currFolderObj?.topics || ['General Notes'];
@@ -28,6 +31,11 @@ export default function TechnicalUploadForm({
 
   const insertSnippet = (snippet) => {
     setContent(prev => prev + snippet);
+  };
+
+  const handleCameraCapture = (dataUrl) => {
+    setDiagramImage(dataUrl);
+    showToast('📷 Architecture diagram / whiteboard snapped!');
   };
 
   const handleSubmit = async (e) => {
@@ -46,6 +54,7 @@ export default function TechnicalUploadForm({
       language,
       content: content.trim(),
       summary: summary.trim(),
+      diagramUrl: diagramImage || null,
       tags: tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
       starred: false,
       createdAt: new Date().toISOString()
@@ -57,6 +66,7 @@ export default function TechnicalUploadForm({
     setTitle('');
     setContent('');
     setSummary('');
+    setDiagramImage(null);
     setTags('');
     setShowLivePreview(false);
     onNoteSaved();
@@ -69,14 +79,26 @@ export default function TechnicalUploadForm({
           <Terminal style={{ color: 'var(--primary)' }} />
           Section 2: Upload Technical Content (Text Manner)
         </h3>
-        <button
-          type="button"
-          className="btn-duo-secondary"
-          style={{ padding: '6px 14px', fontSize: 12 }}
-          onClick={() => setShowLivePreview(!showLivePreview)}
-        >
-          {showLivePreview ? 'Hide Preview' : 'Live Preview'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            className="btn-duo-secondary"
+            style={{ padding: '6px 12px', fontSize: 12 }}
+            onClick={() => setIsCameraOpen(true)}
+            title="Take a photo of whiteboard architecture diagram or code on screen"
+          >
+            <Camera style={{ width: 14, height: 14, color: 'var(--primary-dark)' }} />
+            Snap Whiteboard / Diagram
+          </button>
+          <button
+            type="button"
+            className="btn-duo-secondary"
+            style={{ padding: '6px 14px', fontSize: 12 }}
+            onClick={() => setShowLivePreview(!showLivePreview)}
+          >
+            {showLivePreview ? 'Hide Preview' : 'Live Preview'}
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -188,6 +210,16 @@ export default function TechnicalUploadForm({
                 <button type="button" className="tool-btn" onClick={() => insertSnippet('\n- Item 1\n- Item 2\n')}>
                   • List
                 </button>
+                <button
+                  type="button"
+                  className="tool-btn"
+                  style={{ color: 'var(--primary-dark)', marginLeft: 'auto' }}
+                  onClick={() => setIsCameraOpen(true)}
+                  title="Snap Diagram with Camera"
+                >
+                  <Camera style={{ width: 14, height: 14, marginRight: 4 }} />
+                  Snap Diagram
+                </button>
               </div>
               <textarea
                 className="form-textarea code-font"
@@ -197,6 +229,38 @@ export default function TechnicalUploadForm({
                 required
               />
             </div>
+
+            {/* Attached Diagram / Whiteboard Photo Preview */}
+            {diagramImage && (
+              <div style={{
+                marginTop: 14,
+                padding: 14,
+                background: 'var(--surface-muted)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-light)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <ImageIcon style={{ width: 16, height: 16, color: 'var(--primary)' }} />
+                    Attached Whiteboard / Diagram Snapshot
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-icon-subtle"
+                    onClick={() => setDiagramImage(null)}
+                    title="Remove attached diagram"
+                    style={{ width: 28, height: 28 }}
+                  >
+                    <Trash2 style={{ width: 14, height: 14, color: 'var(--error)' }} />
+                  </button>
+                </div>
+                <img
+                  src={diagramImage}
+                  alt="Architecture Diagram"
+                  style={{ maxHeight: 200, width: '100%', objectFit: 'contain', background: '#111', borderRadius: 'var(--radius-sm)' }}
+                />
+              </div>
+            )}
 
             {showLivePreview && (
               <div className="live-markdown-preview">
@@ -225,6 +289,7 @@ export default function TechnicalUploadForm({
               setTitle('');
               setContent('');
               setSummary('');
+              setDiagramImage(null);
               setTags('');
             }}
           >
@@ -236,6 +301,14 @@ export default function TechnicalUploadForm({
           </button>
         </div>
       </form>
+
+      {/* Live Camera Modal */}
+      <CameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Snap Whiteboard / Architecture Diagram"
+      />
     </div>
   );
 }

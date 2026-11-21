@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { FunctionSquare, Code, Image as ImageIcon, Crop, Check } from 'lucide-react';
+import { FunctionSquare, Code, Image as ImageIcon, Crop, Check, Camera } from 'lucide-react';
 import MathView from '../MathView.jsx';
+import CameraModal from '../CameraModal.jsx';
 import { db } from '../../services/db.js';
 
 export default function FormulaUploadForm({
@@ -17,6 +18,7 @@ export default function FormulaUploadForm({
   const [screenshotUrl, setScreenshotUrl] = useState(null);
   const [breakdown, setBreakdown] = useState('');
   const [tags, setTags] = useState('');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
@@ -37,8 +39,15 @@ export default function FormulaUploadForm({
     const reader = new FileReader();
     reader.onload = (e) => {
       setScreenshotUrl(e.target.result);
+      setFormulaMode('screenshot');
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCameraCapture = (dataUrl) => {
+    setScreenshotUrl(dataUrl);
+    setFormulaMode('screenshot');
+    showToast('📐 Formula photo captured from camera!');
   };
 
   const handleSubmit = async (e) => {
@@ -54,7 +63,7 @@ export default function FormulaUploadForm({
     }
 
     if (formulaMode === 'screenshot' && !screenshotUrl) {
-      showToast('📸 Please upload a formula screenshot or diagram', 'warning');
+      showToast('📸 Please upload or snap a formula screenshot or diagram', 'warning');
       return;
     }
 
@@ -91,22 +100,35 @@ export default function FormulaUploadForm({
           Section 3: Upload Formulae (Screenshot or Text)
         </h3>
 
-        <div className="formula-mode-switch">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="formula-mode-switch" style={{ margin: 0 }}>
+            <button
+              type="button"
+              className={`formula-mode-btn ${formulaMode === 'latex' ? 'active' : ''}`}
+              onClick={() => setFormulaMode('latex')}
+            >
+              <Code style={{ width: 15, height: 15 }} />
+              LaTeX Math
+            </button>
+            <button
+              type="button"
+              className={`formula-mode-btn ${formulaMode === 'screenshot' ? 'active' : ''}`}
+              onClick={() => setFormulaMode('screenshot')}
+            >
+              <ImageIcon style={{ width: 15, height: 15 }} />
+              Photo / Diagram
+            </button>
+          </div>
+
           <button
             type="button"
-            className={`formula-mode-btn ${formulaMode === 'latex' ? 'active' : ''}`}
-            onClick={() => setFormulaMode('latex')}
+            className="btn-duo-secondary"
+            style={{ padding: '6px 12px', fontSize: 12 }}
+            onClick={() => setIsCameraOpen(true)}
+            title="Snap equation on blackboard or textbook"
           >
-            <Code style={{ width: 16, height: 16 }} />
-            LaTeX / Math Text
-          </button>
-          <button
-            type="button"
-            className={`formula-mode-btn ${formulaMode === 'screenshot' ? 'active' : ''}`}
-            onClick={() => setFormulaMode('screenshot')}
-          >
-            <ImageIcon style={{ width: 16, height: 16 }} />
-            Screenshot / Diagram
+            <Camera style={{ width: 15, height: 15, color: 'var(--primary-dark)' }} />
+            Snap with Camera
           </button>
         </div>
       </div>
@@ -208,7 +230,7 @@ export default function FormulaUploadForm({
             </div>
           ) : (
             <div className="form-group full-width">
-              <label className="form-label">Upload Formula Screenshot / Diagram</label>
+              <label className="form-label">Upload or Snap Formula Photo / Diagram</label>
               <div
                 className="dropzone-box"
                 onDragOver={(e) => e.preventDefault()}
@@ -219,8 +241,24 @@ export default function FormulaUploadForm({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Crop className="dropzone-icon" />
-                <div className="dropzone-prompt">Drag and drop formula screenshot here, or click to browse</div>
-                <div className="dropzone-subtext">Drop crops from textbooks, papers, or digital whiteboards</div>
+                <div className="dropzone-prompt">Drag and drop formula photo here, or click to browse</div>
+                <div className="dropzone-subtext">Drop crops from textbooks, papers, or blackboard photos</div>
+                
+                <div style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    className="btn-duo-primary"
+                    style={{ fontSize: 13, padding: '9px 18px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCameraOpen(true);
+                    }}
+                  >
+                    <Camera style={{ width: 17, height: 17 }} />
+                    Snap Formula with Camera
+                  </button>
+                </div>
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -293,6 +331,14 @@ export default function FormulaUploadForm({
           </button>
         </div>
       </form>
+
+      {/* Live Camera Modal */}
+      <CameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Capture Formula / Blackboard Equation"
+      />
     </div>
   );
 }

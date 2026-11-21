@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Check, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, Check, Image as ImageIcon, Camera } from 'lucide-react';
+import CameraModal from '../CameraModal.jsx';
 import { db } from '../../services/db.js';
 
 export default function PhotoUploadForm({
@@ -15,9 +16,9 @@ export default function PhotoUploadForm({
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [notesText, setNotesText] = useState('');
   const [tags, setTags] = useState('');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Update topics when folder changes
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
   const topics = currFolderObj?.topics || ['General Notes'];
 
@@ -38,6 +39,11 @@ export default function PhotoUploadForm({
     });
   };
 
+  const handleCameraCapture = (dataUrl) => {
+    setUploadedPhotos(prev => [...prev, dataUrl]);
+    showToast(`📸 Captured Page ${uploadedPhotos.length + 1} added!`);
+  };
+
   const handleDrop = (e) => {
     e.preventDefault();
     handleFiles(e.dataTransfer.files);
@@ -54,7 +60,7 @@ export default function PhotoUploadForm({
       return;
     }
     if (uploadedPhotos.length === 0) {
-      showToast('📸 Please upload at least one photo of your notes', 'warning');
+      showToast('📸 Please upload or snap at least one photo of your notes', 'warning');
       return;
     }
 
@@ -75,7 +81,6 @@ export default function PhotoUploadForm({
     await db.saveNote(newNote);
     showToast(`✨ Photo Notes Saved in ${folder} → ${topic}! (+15 XP)`);
 
-    // Reset Form
     setTitle('');
     setUploadedPhotos([]);
     setNotesText('');
@@ -90,9 +95,15 @@ export default function PhotoUploadForm({
           <ImageIcon style={{ color: 'var(--primary)' }} />
           Section 1: Upload Handwritten Notes (Photo)
         </h3>
-        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          Supports PNG, JPG, HEIC, multi-page
-        </span>
+        <button
+          type="button"
+          className="btn-duo-secondary"
+          style={{ padding: '7px 14px', fontSize: 13 }}
+          onClick={() => setIsCameraOpen(true)}
+        >
+          <Camera style={{ width: 16, height: 16, color: 'var(--primary-dark)' }} />
+          Snap with Camera
+        </button>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -158,7 +169,7 @@ export default function PhotoUploadForm({
           </div>
 
           <div className="form-group full-width">
-            <label className="form-label">Drop or Select Note Photos *</label>
+            <label className="form-label">Capture or Select Note Photos *</label>
             <div
               className="dropzone-box"
               onDragOver={(e) => e.preventDefault()}
@@ -166,8 +177,24 @@ export default function PhotoUploadForm({
               onClick={() => fileInputRef.current?.click()}
             >
               <UploadCloud className="dropzone-icon" />
-              <div className="dropzone-prompt">Drag and drop notes photos here, or click to browse</div>
-              <div className="dropzone-subtext">Supports smartphone camera photos and multi-page scans</div>
+              <div className="dropzone-prompt">Drag and drop photos here, or click to browse</div>
+              <div className="dropzone-subtext">Supports camera photos, document scans, and multi-page notebooks</div>
+              
+              <div style={{ marginTop: 14 }}>
+                <button
+                  type="button"
+                  className="btn-duo-primary"
+                  style={{ fontSize: 13, padding: '9px 18px' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCameraOpen(true);
+                  }}
+                >
+                  <Camera style={{ width: 17, height: 17 }} />
+                  Take Photo via Camera
+                </button>
+              </div>
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -200,27 +227,29 @@ export default function PhotoUploadForm({
               </div>
             </div>
 
-            <div className="preview-gallery">
-              {uploadedPhotos.map((dataUrl, idx) => (
-                <div
-                  key={idx}
-                  className={`preview-thumb-card ${qualityFilter === 'contrast' ? 'enhanced' : ''}`}
-                >
-                  <img src={dataUrl} alt={`Page ${idx + 1}`} />
-                  <button
-                    type="button"
-                    className="preview-thumb-remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemovePhoto(idx);
-                    }}
-                    title="Remove"
+            {uploadedPhotos.length > 0 && (
+              <div className="preview-gallery">
+                {uploadedPhotos.map((dataUrl, idx) => (
+                  <div
+                    key={idx}
+                    className={`preview-thumb-card ${qualityFilter === 'contrast' ? 'enhanced' : ''}`}
                   >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <img src={dataUrl} alt={`Page ${idx + 1}`} />
+                    <button
+                      type="button"
+                      className="preview-thumb-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePhoto(idx);
+                      }}
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-group full-width">
@@ -260,10 +289,18 @@ export default function PhotoUploadForm({
           </button>
           <button type="submit" className="btn-duo-primary">
             <Check style={{ width: 18, height: 18 }} />
-            Save Photo Notes
+            Save Photo Notes ({uploadedPhotos.length} {uploadedPhotos.length === 1 ? 'page' : 'pages'})
           </button>
         </div>
       </form>
+
+      {/* Live Camera Modal */}
+      <CameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Scan Handwritten Notes Page"
+      />
     </div>
   );
 }
