@@ -1,0 +1,12 @@
+{
+  "name": "notes-hub",
+  "version": "1.0.0",
+  "description": "Smart Notes Hub - Apple-Duolingo Hybrid UI for Photo Notes, Technical Content, and Formulae",
+  "scripts": {
+    "start": "npx serve -l 3000 .",
+    "dev": "npx serve -l 3000 ."
+  },
+  "keywords": ["notes", "duolingo-ui", "apple-minimalism", "katex", "technical-notes"],
+  "author": "",
+  "license": "MIT"
+}

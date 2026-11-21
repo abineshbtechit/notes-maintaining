@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes Hub — Apple-Duolingo Study System</title>
+
+  <!-- Typography: Inter font from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for crisp mathematical formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Apple-Duolingo Hybrid Design System Stylesheets -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ==============================================================
+       TOP HEADER (Apple Minimalism + Duolingo Streak & Tactile Badge)
+  ============================================================== -->
+  <header class="top-header">
+    <div class="brand-wrapper">
+      <div class="brand-logo-badge" title="Notes Hub">
+        <i data-lucide="sparkles" style="width: 22px; height: 22px;"></i>
+      </div>
+      <div>
+        <h1 class="brand-title">
+          NOTES HUB
+          <span class="brand-badge">Apple × Duolingo</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Gamified Duolingo Streak Pill -->
+      <div class="streak-pill" title="Current Daily Study Streak">
+        <span class="streak-flame">🔥</span>
+        <span>5 Day Streak</span>
+      </div>
+
+      <!-- Navigation Switcher Pills -->
+      <div class="nav-toggle-group">
+        <button type="button" class="nav-toggle-btn active" id="navBtnUpload">
+          <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+          Upload Studio
+        </button>
+        <button type="button" class="nav-toggle-btn" id="navBtnLibrary">
+          <i data-lucide="library" style="width: 16px; height: 16px;"></i>
+          View Notes
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==============================================================
+       MAIN APPLICATION CONTAINER
+  ============================================================== -->
+  <main class="main-wrapper">
+
+    <!-- ============================================================
+         VIEW 1: UPLOAD STUDIO (3 MAIN SECTIONS)
+    ============================================================ -->
+    <section id="viewUpload" class="page-view active">
+
+      <!-- Hero Header -->
+      <div class="hero-banner">
+        <h2 class="hero-title">
+          Upload & Catalog Knowledge
+        </h2>
+        <p class="hero-subtitle">
+          Capture handwritten lecture notes, technical markdown documentation, and complex mathematical formulae inside structured folders and topics.
+        </p>
+      </div>
+
+      <!-- Apple Obsidian Vault Highlight -->
+      <div class="dark-vault-section">
+        <div>
+          <h3>Hierarchical Knowledge Vault</h3>
+          <p>Organize topics cleanly inside folders (e.g. <strong>Percentages → Profit & Loss</strong>) with zero storage limits.</p>
+        </div>
+        <button type="button" class="btn-duo-primary" id="heroVaultBtn">
+          Browse Library →
+        </button>
+      </div>
+
+      <!-- 3 Main Upload Section Tabs -->
+      <div class="upload-tabs-container">
+        <!-- Section 1 Card -->
+        <div class="upload-tab-card active" data-tab="photo">
+          <div class="tab-icon-box">
+            <i data-lucide="camera" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="tab-meta">
+            <h4>1. Handwritten Notes</h4>
+            <span>Photo upload of taken notes</span>
+          </div>
+        </div>
+
+        <!-- Section 2 Card -->
+        <div class="upload-tab-card" data-tab="technical">
+          <div class="tab-icon-box">
+            <i data-lucide="file-code" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="tab-meta">
+            <h4>2. Technical Content</h4>
+            <span>Code, markdown & architecture</span>
+          </div>
+        </div>
+
+        <!-- Section 3 Card -->
+        <div class="upload-tab-card" data-tab="formula">
+          <div class="tab-icon-box">
+            <i data-lucide="sigma" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="tab-meta">
+            <h4>3. Formulae & Cheatsheet</h4>
+            <span>LaTeX math or screenshot</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           STUDIO FORM CONTAINER
+      ======================================================== -->
+      <div class="studio-form-card">
+
+        <!-- ------------------------------------------------------
+             FLOW 1: PHOTO UPLOAD (HANDWRITTEN NOTES)
+        ------------------------------------------------------ -->
+        <div id="flowPhoto" class="section-flow active">
+          <div class="form-header-bar">
+            <h3>
+              <i data-lucide="image" style="color: var(--primary);"></i>
+              Section 1: Upload Handwritten Notes (Photo)
+            </h3>
+            <span style="font-size: 13px; color: var(--text-muted);">Supports PNG, JPG, HEIC, multi-page</span>
+          </div>
+
+          <form id="formPhotoNotes">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label" for="photoTitle">Note Title *</label>
+                <input type="text" id="photoTitle" class="form-input" placeholder="e.g. Profit & Loss Shortcut Rules" required>
+              </div>
+
+              <!-- Folder & Topic Selector Hierarchy -->
+              <div class="form-group">
+                <label class="form-label" for="photoFolder">Folder / Section *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="photoFolder" class="form-select folder-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-folder-quick" title="Create New Folder">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="photoTopic">Topic / Sub-folder *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="photoTopic" class="form-select topic-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-topic-quick" data-folder-select="photoFolder" title="Create New Topic">+</button>
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label">Drop or Select Note Photos *</label>
+                <div class="dropzone-box" id="photoDropzone">
+                  <i data-lucide="upload-cloud" class="dropzone-icon"></i>
+                  <div class="dropzone-prompt">Drag and drop notes photos here, or click to browse</div>
+                  <div class="dropzone-subtext">Supports smartphone camera photos and multi-page scans</div>
+                  <input type="file" id="photoFileInput" class="file-hidden-input" accept="image/*" multiple>
+                </div>
+
+                <!-- Quality Filter Pills for Handwritten Clarity -->
+                <div style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Image Filter:</span>
+                  <div class="filter-pill-group">
+                    <button type="button" class="filter-pill active" data-filter="standard">Original Color</button>
+                    <button type="button" class="filter-pill" data-filter="contrast">High Contrast (Pencil & Ink)</button>
+                  </div>
+                </div>
+
+                <!-- Gallery of Selected Photos -->
+                <div class="preview-gallery" id="photoGallery"></div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="photoDescription">Lecture Remarks / Key Notes (Optional)</label>
+                <textarea id="photoDescription" class="form-textarea" placeholder="Add any supplementary notes, questions, or context from the lecture..."></textarea>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="photoTags">Tags (Comma-separated)</label>
+                <input type="text" id="photoTags" class="form-input" placeholder="percentages, profit-loss, quantitative, formulas">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+              <button type="reset" class="btn-duo-secondary">Reset</button>
+              <button type="submit" class="btn-duo-primary">
+                <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                Save Photo Notes
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ------------------------------------------------------
+             FLOW 2: TECHNICAL CONTENT (TEXT & CODE)
+        ------------------------------------------------------ -->
+        <div id="flowTechnical" class="section-flow">
+          <div class="form-header-bar">
+            <h3>
+              <i data-lucide="terminal" style="color: var(--primary);"></i>
+              Section 2: Upload Technical Content (Text Manner)
+            </h3>
+            <button type="button" class="btn-duo-secondary" id="btnToggleLivePreview" style="padding: 6px 14px; font-size: 12px;">
+              Live Preview
+            </button>
+          </div>
+
+          <form id="formTechnical">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label" for="techTitle">Document Title *</label>
+                <input type="text" id="techTitle" class="form-input" placeholder="e.g. Distributed Cache Invalidation Strategies" required>
+              </div>
+
+              <!-- Folder & Topic Selector Hierarchy -->
+              <div class="form-group">
+                <label class="form-label" for="techFolder">Folder / Section *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="techFolder" class="form-select folder-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-folder-quick" title="Create New Folder">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="techTopic">Topic / Sub-folder *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="techTopic" class="form-select topic-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-topic-quick" data-folder-select="techFolder" title="Create New Topic">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="techLanguage">Language / Format</label>
+                <select id="techLanguage" class="form-select">
+                  <option value="markdown">Markdown (.md)</option>
+                  <option value="python">Python</option>
+                  <option value="javascript">JavaScript / TypeScript</option>
+                  <option value="sql">SQL / Database</option>
+                  <option value="cpp">C / C++</option>
+                  <option value="rust">Rust</option>
+                  <option value="plaintext">Plain Text</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="techTags">Tags (Comma-separated)</label>
+                <input type="text" id="techTags" class="form-input" placeholder="system-design, redis, performance">
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="techContent">Technical Content (Markdown & Code) *</label>
+                <div class="editor-wrapper">
+                  <!-- Quick formatting toolbar -->
+                  <div class="editor-toolbar">
+                    <button type="button" class="tool-btn" data-action="bold" title="Bold"><b>B</b></button>
+                    <button type="button" class="tool-btn" data-action="italic" title="Italic"><i>I</i></button>
+                    <button type="button" class="tool-btn" data-action="h2" title="Section Heading">H2</button>
+                    <button type="button" class="tool-btn" data-action="code" title="Code Block">&lt;/&gt;</button>
+                    <button type="button" class="tool-btn" data-action="list" title="Bullet List">• List</button>
+                  </div>
+                  <textarea id="techContent" class="form-textarea code-font" placeholder="# Technical Overview&#10;&#10;Explain algorithms, architecture tradeoffs, or paste code snippets..." required></textarea>
+                </div>
+
+                <!-- Hidden toggle live preview -->
+                <div id="techLivePreview" class="live-markdown-preview" style="display: none;"></div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="techSummary">Key Takeaways / Abstract (Optional)</label>
+                <textarea id="techSummary" class="form-textarea" style="min-height: 80px;" placeholder="Quick bullet point summary for swift recall during revisions..."></textarea>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+              <button type="reset" class="btn-duo-secondary">Reset</button>
+              <button type="submit" class="btn-duo-primary">
+                <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                Save Technical Document
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ------------------------------------------------------
+             FLOW 3: FORMULAE (SCREENSHOT OR LATEX TEXT)
+        ------------------------------------------------------ -->
+        <div id="flowFormula" class="section-flow">
+          <div class="form-header-bar">
+            <h3>
+              <i data-lucide="function-square" style="color: var(--primary);"></i>
+              Section 3: Upload Formulae (Screenshot or Text)
+            </h3>
+            
+            <!-- Mode Switcher -->
+            <div class="formula-mode-switch">
+              <button type="button" class="formula-mode-btn active" id="formulaModeLatex">
+                <i data-lucide="code" style="width: 16px; height: 16px;"></i>
+                LaTeX / Math Text
+              </button>
+              <button type="button" class="formula-mode-btn" id="formulaModeScreenshot">
+                <i data-lucide="image" style="width: 16px; height: 16px;"></i>
+                Screenshot / Diagram
+              </button>
+            </div>
+          </div>
+
+          <form id="formFormula">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label" for="formulaTitle">Formula / Theorem Name *</label>
+                <input type="text" id="formulaTitle" class="form-input" placeholder="e.g. Successive Percentage Change Formula" required>
+              </div>
+
+              <!-- Folder & Topic Selector Hierarchy -->
+              <div class="form-group">
+                <label class="form-label" for="formulaFolder">Folder / Section *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="formulaFolder" class="form-select folder-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-folder-quick" title="Create New Folder">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formulaTopic">Topic / Sub-folder *</label>
+                <div style="display: flex; gap: 6px;">
+                  <select id="formulaTopic" class="form-select topic-select" required></select>
+                  <button type="button" class="btn-icon-subtle btn-add-topic-quick" data-folder-select="formulaFolder" title="Create New Topic">+</button>
+                </div>
+              </div>
+
+              <!-- LaTeX Text Mode Inputs -->
+              <div class="form-group full-width" id="formulaLatexSection">
+                <label class="form-label" for="formulaLatexInput">LaTeX Equation Code</label>
+                
+                <!-- Quick Insertion Math Symbol Chips -->
+                <div class="math-quick-symbols">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); align-self: center; margin-right: 4px;">QUICK CHIPS:</span>
+                  <button type="button" class="symbol-chip" data-snippet="\text{Net \% Change} = a + b + \frac{a \cdot b}{100}">% Change</button>
+                  <button type="button" class="symbol-chip" data-snippet="\frac{a}{b}">Fraction \frac{a}{b}</button>
+                  <button type="button" class="symbol-chip" data-snippet="\int_{-\infty}^{\infty} ">Integral \int</button>
+                  <button type="button" class="symbol-chip" data-snippet="\sum_{i=1}^{n} ">Sum \sum</button>
+                  <button type="button" class="symbol-chip" data-snippet="\sqrt{x} ">Root \sqrt{}</button>
+                  <button type="button" class="symbol-chip" data-snippet="\partial ">Partial \partial</button>
+                  <button type="button" class="symbol-chip" data-snippet="\nabla ">Nabla \nabla</button>
+                  <button type="button" class="symbol-chip" data-snippet="\alpha, \beta, \theta ">Greek \alpha \beta \theta</button>
+                </div>
+
+                <textarea id="formulaLatexInput" class="form-textarea code-font" placeholder="\text{Net \% Change} = a + b + \frac{a \cdot b}{100}"></textarea>
+
+                <!-- Live KaTeX equation preview -->
+                <div style="margin-top: 10px;">
+                  <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Live Mathematical Render:</span>
+                  <div class="math-rendered-preview-box" id="mathLiveRenderBox">
+                    <span style="color: var(--text-muted); font-size: 14px; font-style: italic;">Enter LaTeX code above to preview equation</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Screenshot Mode Inputs -->
+              <div class="form-group full-width" id="formulaScreenshotSection" style="display: none;">
+                <label class="form-label">Upload Formula Screenshot / Diagram</label>
+                <div class="dropzone-box" id="formulaDropzone">
+                  <i data-lucide="crop" class="dropzone-icon"></i>
+                  <div class="dropzone-prompt">Drag and drop formula screenshot here, or click to browse</div>
+                  <div class="dropzone-subtext">Drop crops from textbooks, papers, or digital whiteboards</div>
+                  <input type="file" id="formulaFileInput" class="file-hidden-input" accept="image/*">
+                </div>
+                <div id="formulaScreenshotPreview"></div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="formulaBreakdown">Variable Legend & Conceptual Breakdown (Optional)</label>
+                <textarea id="formulaBreakdown" class="form-textarea" placeholder="Explain the variables (e.g. a: first % change, b: second % change) or conditions of validity..."></textarea>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="formulaTags">Tags (Comma-separated)</label>
+                <input type="text" id="formulaTags" class="form-input" placeholder="percentages, formulas, shortcuts, quantitative">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+              <button type="reset" class="btn-duo-secondary">Reset</button>
+              <button type="submit" class="btn-duo-primary">
+                <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                Save Formula & Cheatsheet
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         VIEW 2: VIEW NOTES LIBRARY (WITH FOLDER & TOPIC EXPLORER)
+    ============================================================ -->
+    <section id="viewLibrary" class="page-view">
+
+      <!-- Header & Stats -->
+      <div class="hero-banner" style="margin-bottom: 20px;">
+        <h2 class="hero-title">
+          Knowledge Library
+        </h2>
+        <p class="hero-subtitle">
+          Browse, edit, search, and manage your notes structured under dedicated subject folders and topic categories.
+        </p>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-icon"><i data-lucide="layers" style="color: var(--primary-dark);"></i></div>
+          <div>
+            <div class="stat-count" id="statTotal">0</div>
+            <div class="stat-label">Total Notes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i data-lucide="camera" style="color: #0066CC;"></i></div>
+          <div>
+            <div class="stat-count" id="statPhotos">0</div>
+            <div class="stat-label">Photo Notes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i data-lucide="code" style="color: #7E22CE;"></i></div>
+          <div>
+            <div class="stat-count" id="statTech">0</div>
+            <div class="stat-label">Technical Docs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i data-lucide="sigma" style="color: var(--primary-dark);"></i></div>
+          <div>
+            <div class="stat-count" id="statFormula">0</div>
+            <div class="stat-label">Formulae</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Folder & Topic Explorer Hierarchy -->
+      <div class="folder-explorer-card">
+        <div class="breadcrumbs-bar" id="libraryBreadcrumbs">
+          <span class="breadcrumb-item active" data-folder="all">
+            <i data-lucide="folders" style="width: 15px; height: 15px;"></i>
+            All Folders
+          </span>
+        </div>
+        <div class="folder-chips-row" id="libraryFolderChips">
+          <!-- Rendered dynamically -->
+        </div>
+        <div class="topic-subbar" id="libraryTopicSubbar" style="display: none;">
+          <span class="topic-subbar-label">Topics:</span>
+          <div id="libraryTopicChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Controls -->
+      <div class="library-controls-bar">
+        <div class="search-input-wrapper">
+          <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+          <input type="text" id="librarySearchInput" class="search-input" placeholder="Search by title, topic, formula, code, or #tag...">
+        </div>
+
+        <div class="category-filter-chips">
+          <button type="button" class="cat-filter-chip active" data-category="all">All Types</button>
+          <button type="button" class="cat-filter-chip" data-category="photo">📸 Photos</button>
+          <button type="button" class="cat-filter-chip" data-category="technical">💻 Technical</button>
+          <button type="button" class="cat-filter-chip" data-category="formula">📐 Formulae</button>
+          <button type="button" class="cat-filter-chip" data-category="starred">⭐ Starred</button>
+        </div>
+      </div>
+
+      <!-- Notes Dynamic Grid -->
+      <div class="notes-grid" id="notesGrid">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==============================================================
+       FLOATING PILL BOTTOM NAVIGATION DOCK (Apple-Duolingo Hybrid)
+  ============================================================== -->
+  <nav class="floating-nav-dock" aria-label="Main Navigation">
+    <button type="button" class="nav-dock-item active" id="dockBtnUpload">
+      <i data-lucide="plus-circle"></i>
+      <span>Upload</span>
+    </button>
+    <button type="button" class="nav-dock-item" id="dockBtnLibrary">
+      <i data-lucide="book-open"></i>
+      <span>Library</span>
+    </button>
+  </nav>
+
+  <!-- ==============================================================
+       FULLSCREEN INSPECTOR MODAL
+  ============================================================== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span id="modalBadge" class="note-type-badge photo">TYPE</span>
+          <h3 id="modalTitle" style="font-size: 20px; margin-top: 6px;">Note Detail</h3>
+          <span id="modalDate" style="font-size: 12px; color: var(--text-muted);">Created Date</span>
+        </div>
+        <button type="button" class="btn-icon-subtle" id="modalCloseBtn" title="Close">✕</button>
+      </div>
+
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamic content injected here -->
+      </div>
+
+      <div class="modal-footer">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-duo-secondary" id="btnModalEdit">
+            <i data-lucide="pencil" style="width: 15px; height: 15px;"></i>
+            Edit Note
+          </button>
+          <button type="button" class="btn-duo-secondary" id="btnModalCopy" style="display: none;">
+            Copy Content
+          </button>
+        </div>
+        <button type="button" class="btn-duo-primary" id="btnModalDownload">
+          <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+          Export Note
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       EDIT NOTE MODAL (FULL EDITING CAPABILITIES)
+  ============================================================== -->
+  <div class="modal-overlay" id="editModalOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="note-type-badge photo" id="editModalBadge">EDIT NOTE</span>
+          <h3 id="editModalHeading" style="font-size: 20px; margin-top: 6px;">Edit Note Details</h3>
+        </div>
+        <button type="button" class="btn-icon-subtle" id="editModalCloseBtn" title="Close">✕</button>
+      </div>
+
+      <form id="formEditNote">
+        <div class="modal-body" style="padding: 24px 28px;">
+          <input type="hidden" id="editNoteId">
+          <input type="hidden" id="editNoteType">
+
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="form-label" for="editNoteTitle">Title *</label>
+              <input type="text" id="editNoteTitle" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="editNoteFolder">Folder / Section *</label>
+              <div style="display: flex; gap: 6px;">
+                <select id="editNoteFolder" class="form-select folder-select" required></select>
+                <button type="button" class="btn-icon-subtle btn-add-folder-quick" title="Create New Folder">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="editNoteTopic">Topic *</label>
+              <div style="display: flex; gap: 6px;">
+                <select id="editNoteTopic" class="form-select topic-select" required></select>
+                <button type="button" class="btn-icon-subtle btn-add-topic-quick" data-folder-select="editNoteFolder" title="Create New Topic">+</button>
+              </div>
+            </div>
+
+            <!-- Dynamic Fields for Type-Specific Editing -->
+            <div id="editDynamicFields" class="form-group full-width"></div>
+
+            <div class="form-group full-width">
+              <label class="form-label" for="editNoteTags">Tags (Comma-separated)</label>
+              <input type="text" id="editNoteTags" class="form-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-duo-secondary" id="btnEditCancel">Cancel</button>
+          <button type="submit" class="btn-duo-primary">
+            <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       QUICK CREATE NEW FOLDER / TOPIC MODAL
+  ============================================================== -->
+  <div class="modal-overlay" id="newFolderModalOverlay">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="font-size: 18px;" id="newFolderModalHeading">Create New Folder</h3>
+        <button type="button" class="btn-icon-subtle" id="newFolderCloseBtn">✕</button>
+      </div>
+      <form id="formNewFolder">
+        <div class="modal-body" style="padding: 20px;">
+          <input type="hidden" id="newFolderTargetType" value="folder">
+          <input type="hidden" id="newFolderParentFolder" value="">
+          
+          <div class="form-group">
+            <label class="form-label" id="newFolderInputLabel">Folder Name *</label>
+            <input type="text" id="newFolderInput" class="form-input" placeholder="e.g. Percentages" required>
+          </div>
+          <div class="form-group" id="newFolderInitialTopicGroup">
+            <label class="form-label">Initial Topic (Optional)</label>
+            <input type="text" id="newFolderInitialTopic" class="form-input" placeholder="e.g. Profit & Loss">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-duo-secondary" id="btnNewFolderCancel">Cancel</button>
+          <button type="submit" class="btn-duo-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       TOAST CELEBRATORY NOTIFICATION
+  ============================================================== -->
+  <div class="toast-notice" id="toastNotice">
+    <i data-lucide="check-circle-2" style="color: var(--primary); width: 22px; height: 22px;"></i>
+    <span id="toastMessage" style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Notes saved!</span>
+  </div>
+
+  <!-- App Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/sample-data.js"></script>
+  <script src="js/math-preview.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

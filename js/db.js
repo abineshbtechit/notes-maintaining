@@ -1,0 +1,181 @@
+/**
+ * IndexedDB persistence layer for Notes Hub
+ * Handles photos (base64/blobs), technical markdown text, and formulae,
+ * with hierarchical Folders & Topics categorization.
+ */
+const DB_NAME = 'NotesHubDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'notes';
+
+class NotesStorage {
+  constructor() {
+    this.db = null;
+  }
+
+  async init() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          store.createIndex('type', 'type', { unique: false });
+          store.createIndex('folder', 'folder', { unique: false });
+          store.createIndex('topic', 'topic', { unique: false });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('starred', 'starred', { unique: false });
+        }
+      };
+
+      request.onsuccess = (e) => {
+        this.db = e.target.result;
+        resolve(this.db);
+      };
+
+      request.onerror = (e) => {
+        console.error('IndexedDB error:', e);
+        reject(e);
+      };
+    });
+  }
+
+  async saveNote(note) {
+    if (!this.db) await this.init();
+    
+    // Normalization for folder and topic
+    if (!note.folder) note.folder = note.subject || 'General';
+    if (!note.topic) note.topic = 'General Notes';
+    
+    // Register folder & topic in local registry
+    this.registerFolder(note.folder, note.topic);
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(note);
+
+      request.onsuccess = () => resolve(note);
+      request.onerror = (e) => reject(e);
+    });
+  }
+
+  async getAllNotes() {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const notes = request.result || [];
+        // Ensure folder and topic are always present
+        notes.forEach(n => {
+          if (!n.folder) n.folder = n.subject || 'General';
+          if (!n.topic) n.topic = 'General Notes';
+        });
+        // Sort newest first
+        notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        resolve(notes);
+      };
+      request.onerror = (e) => reject(e);
+    });
+  }
+
+  async getNoteById(id) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(id);
+
+      request.onsuccess = () => {
+        const note = request.result;
+        if (note) {
+          if (!note.folder) note.folder = note.subject || 'General';
+          if (!note.topic) note.topic = 'General Notes';
+        }
+        resolve(note);
+      };
+      request.onerror = (e) => reject(e);
+    });
+  }
+
+  async deleteNote(id) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve(true);
+      request.onerror = (e) => reject(e);
+    });
+  }
+
+  async toggleStar(id) {
+    const note = await this.getNoteById(id);
+    if (!note) return null;
+    note.starred = !note.starred;
+    await this.saveNote(note);
+    return note;
+  }
+
+  async countNotes() {
+    const all = await this.getAllNotes();
+    return {
+      total: all.length,
+      photos: all.filter(n => n.type === 'photo').length,
+      technical: all.filter(n => n.type === 'technical').length,
+      formula: all.filter(n => n.type === 'formula').length,
+      starred: all.filter(n => n.starred).length
+    };
+  }
+
+  // ==========================================
+  // FOLDERS & TOPICS REGISTRY
+  // ==========================================
+  getRegisteredFolders() {
+    const defaultData = (typeof DEFAULT_FOLDERS_STRUCTURE !== 'undefined') 
+      ? DEFAULT_FOLDERS_STRUCTURE 
+      : [
+          { folder: 'Percentages', topics: ['Profit & Loss', 'Basic Fractions to %', 'Successive Percentage', 'Discounts & Markup'] },
+          { folder: 'Calculus', topics: ['Vector Calculus', 'Limits & Derivatives', 'Integration Techniques'] },
+          { folder: 'Computer Science', topics: ['Distributed Systems', 'Caching & Redis'] }
+        ];
+
+    try {
+      const stored = localStorage.getItem('notes_hub_folders');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {}
+
+    return defaultData;
+  }
+
+  saveRegisteredFolders(folders) {
+    try {
+      localStorage.setItem('notes_hub_folders', JSON.stringify(folders));
+    } catch (e) {}
+  }
+
+  registerFolder(folderName, topicName) {
+    if (!folderName) return;
+    const folders = this.getRegisteredFolders();
+    let folderObj = folders.find(f => f.folder.toLowerCase() === folderName.toLowerCase());
+    
+    if (!folderObj) {
+      folderObj = { folder: folderName, topics: [] };
+      folders.push(folderObj);
+    }
+    
+    if (topicName && !folderObj.topics.some(t => t.toLowerCase() === topicName.toLowerCase())) {
+      folderObj.topics.push(topicName);
+    }
+
+    this.saveRegisteredFolders(folders);
+  }
+}
+
+window.notesDB = new NotesStorage();
