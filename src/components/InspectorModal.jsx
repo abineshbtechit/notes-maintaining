@@ -1,9 +1,12 @@
-import React from 'react';
-import { Download, Pencil, FolderInput } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Pencil, FolderInput, Eye, Code } from 'lucide-react';
 import MathView from './MathView.jsx';
+import MarkdownViewer from './MarkdownViewer.jsx';
 
 export default function InspectorModal({ note, onClose, onEdit, onMove, showToast }) {
   if (!note) return null;
+
+  const [techViewMode, setTechViewMode] = useState('formatted'); // 'formatted' | 'raw'
 
   const handleCopy = () => {
     const textToCopy = note.type === 'technical' ? note.content : (note.latexText || '');
@@ -65,12 +68,58 @@ export default function InspectorModal({ note, onClose, onEdit, onMove, showToas
 
           {note.type === 'technical' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>
-                  Language: {note.language || 'Markdown'}
+                  Format: {note.language || 'Markdown'}
                 </span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    type="button"
+                    className="btn-duo-secondary"
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: 12,
+                      background: techViewMode === 'formatted' ? 'var(--primary-light)' : undefined,
+                      borderColor: techViewMode === 'formatted' ? 'var(--primary)' : undefined,
+                      fontWeight: techViewMode === 'formatted' ? 700 : 500
+                    }}
+                    onClick={() => setTechViewMode('formatted')}
+                  >
+                    <Eye style={{ width: 13, height: 13 }} />
+                    Formatted Output
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-duo-secondary"
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: 12,
+                      background: techViewMode === 'raw' ? 'var(--primary-light)' : undefined,
+                      borderColor: techViewMode === 'raw' ? 'var(--primary)' : undefined,
+                      fontWeight: techViewMode === 'raw' ? 700 : 500
+                    }}
+                    onClick={() => setTechViewMode('raw')}
+                  >
+                    <Code style={{ width: 13, height: 13 }} />
+                    Raw Code
+                  </button>
+                </div>
               </div>
-              <div className="modal-code-viewer">{note.content}</div>
+
+              {techViewMode === 'formatted' ? (
+                <div style={{
+                  background: 'var(--surface-container)',
+                  padding: '22px 24px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
+                  maxHeight: 520,
+                  overflowY: 'auto'
+                }}>
+                  <MarkdownViewer content={note.content} />
+                </div>
+              ) : (
+                <div className="modal-code-viewer">{note.content}</div>
+              )}
               {note.diagramUrl && (
                 <div style={{ marginTop: 18 }}>
                   <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>

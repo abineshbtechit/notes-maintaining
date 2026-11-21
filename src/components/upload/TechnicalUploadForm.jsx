@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Terminal, Check, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Terminal, Check, Camera, Image as ImageIcon, Trash2, Upload, FileText, Eye } from 'lucide-react';
 import CameraModal from '../CameraModal.jsx';
+import MarkdownViewer from '../MarkdownViewer.jsx';
 import { db } from '../../services/db.js';
 
 export default function TechnicalUploadForm({
@@ -19,6 +20,7 @@ export default function TechnicalUploadForm({
   const [diagramImage, setDiagramImage] = useState(null);
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const mdFileInputRef = useRef(null);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
   const topics = currFolderObj?.topics || [];
@@ -30,6 +32,30 @@ export default function TechnicalUploadForm({
 
   const insertSnippet = (snippet) => {
     setContent(prev => prev + snippet);
+  };
+
+  const handleFileUpload = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      setContent(text);
+
+      // Auto-extract title from first # header or filename
+      if (!title.trim()) {
+        const match = text.match(/^#\s+(.+)$/m);
+        if (match && match[1]) {
+          setTitle(match[1].trim());
+        } else {
+          setTitle(file.name.replace(/\.[^/.]+$/, ''));
+        }
+      }
+
+      setLanguage('markdown');
+      setShowLivePreview(true);
+      showToast(`📄 Loaded "${file.name}"! Formatted markdown output is ready.`);
+    };
+    reader.readAsText(file);
   };
 
   const handleCameraCapture = (dataUrl) => {
@@ -195,9 +221,64 @@ export default function TechnicalUploadForm({
           </div>
 
           <div className="form-group full-width">
+            {/* File Upload / Dropzone Banner */}
+            <div
+              className="file-import-banner"
+              onClick={() => mdFileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]);
+              }}
+              title="Click or drag & drop to import any .md or .txt file"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <FileText style={{ color: 'var(--primary)', width: 22, height: 22, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Upload or Drop Markdown File (.md, .markdown, .txt)
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    Automatically loads content, sets title, and formats rich output view
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-duo-secondary"
+                style={{ padding: '6px 14px', fontSize: 12, flexShrink: 0 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  mdFileInputRef.current?.click();
+                }}
+              >
+                <Upload style={{ width: 14, height: 14 }} />
+                Choose File
+              </button>
+              <input
+                type="file"
+                ref={mdFileInputRef}
+                accept=".md,.markdown,.txt"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleFileUpload(e.target.files[0]);
+                }}
+              />
+            </div>
+
             <label className="form-label">Technical Content (Markdown & Code) *</label>
             <div className="editor-wrapper">
               <div className="editor-toolbar">
+                <button
+                  type="button"
+                  className="tool-btn"
+                  style={{ color: 'var(--primary-dark)', fontWeight: 700 }}
+                  onClick={() => mdFileInputRef.current?.click()}
+                  title="Upload .md / .txt file from your computer"
+                >
+                  <Upload style={{ width: 13, height: 13, marginRight: 4 }} />
+                  Upload .md
+                </button>
                 <button type="button" className="tool-btn" onClick={() => insertSnippet('**bold**')}>
                   <b>B</b>
                 </button>
@@ -267,7 +348,16 @@ export default function TechnicalUploadForm({
 
             {showLivePreview && (
               <div className="live-markdown-preview">
-                <pre><code>{content || '// Live preview will appear here'}</code></pre>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--border-light)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Eye style={{ width: 14, height: 14, color: 'var(--primary)' }} />
+                    Formatted Markdown Output
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--primary-dark)', fontWeight: 600 }}>
+                    Live Rendered
+                  </span>
+                </div>
+                <MarkdownViewer content={content} />
               </div>
             )}
           </div>

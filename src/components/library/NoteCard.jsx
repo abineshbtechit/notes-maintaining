@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pencil, Trash2, FolderInput } from 'lucide-react';
 import MathView from '../MathView.jsx';
+import MarkdownViewer from '../MarkdownViewer.jsx';
 
 export default function NoteCard({
   note,
@@ -68,9 +69,15 @@ export default function NoteCard({
         )}
 
         {note.type === 'technical' && (
-          <div className="card-code-preview">
-            {(note.content || '').substring(0, 160) + '...'}
-          </div>
+          note.language === 'markdown' || !note.language ? (
+            <div className="card-markdown-preview">
+              <MarkdownViewer content={(note.content || '').substring(0, 220)} />
+            </div>
+          ) : (
+            <div className="card-code-preview">
+              {(note.content || '').substring(0, 160) + '...'}
+            </div>
+          )
         )}
 
         {note.type === 'formula' && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Eye } from 'lucide-react';
 import MathView from './MathView.jsx';
+import MarkdownViewer from './MarkdownViewer.jsx';
 import { db } from '../services/db.js';
 
 export default function EditNoteModal({
@@ -23,6 +24,7 @@ export default function EditNoteModal({
   const [techSummary, setTechSummary] = useState(note.summary || '');
   const [latexText, setLatexText] = useState(note.latexText || '');
   const [breakdown, setBreakdown] = useState(note.breakdown || '');
+  const [showEditPreview, setShowEditPreview] = useState(false);
 
   // Folders list
   const [folders, setFolders] = useState([]);
@@ -171,7 +173,18 @@ export default function EditNoteModal({
               {note.type === 'technical' && (
                 <>
                   <div className="form-group full-width">
-                    <label className="form-label">Technical Content (Markdown & Code) *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <label className="form-label" style={{ marginBottom: 0 }}>Technical Content (Markdown & Code) *</label>
+                      <button
+                        type="button"
+                        className="btn-duo-secondary"
+                        style={{ padding: '3px 10px', fontSize: 11 }}
+                        onClick={() => setShowEditPreview(!showEditPreview)}
+                      >
+                        <Eye style={{ width: 12, height: 12 }} />
+                        {showEditPreview ? 'Hide Preview' : 'Preview Output'}
+                      </button>
+                    </div>
                     <textarea
                       className="form-textarea code-font"
                       style={{ minHeight: 200 }}
@@ -179,6 +192,14 @@ export default function EditNoteModal({
                       onChange={(e) => setTechContent(e.target.value)}
                       required
                     />
+                    {showEditPreview && (
+                      <div className="live-markdown-preview" style={{ marginTop: 10 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>
+                          Rendered Markdown Output:
+                        </div>
+                        <MarkdownViewer content={techContent} />
+                      </div>
+                    )}
                   </div>
                   <div className="form-group full-width">
                     <label className="form-label">Key Takeaways / Abstract</label>
