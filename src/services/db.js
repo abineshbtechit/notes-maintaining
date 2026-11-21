@@ -1,5 +1,5 @@
 /**
- * IndexedDB persistence layer for Notes Hub
+ * IndexedDB persistence layer for React Notes Hub
  * Handles photos (base64/blobs), technical markdown text, and formulae,
  * with hierarchical Folders & Topics categorization.
  */
@@ -43,11 +43,9 @@ class NotesStorage {
   async saveNote(note) {
     if (!this.db) await this.init();
     
-    // Normalization for folder and topic
     if (!note.folder) note.folder = note.subject || 'General';
     if (!note.topic) note.topic = 'General Notes';
     
-    // Register folder & topic in local registry
     this.registerFolder(note.folder, note.topic);
 
     return new Promise((resolve, reject) => {
@@ -69,12 +67,10 @@ class NotesStorage {
 
       request.onsuccess = () => {
         const notes = request.result || [];
-        // Ensure folder and topic are always present
         notes.forEach(n => {
           if (!n.folder) n.folder = n.subject || 'General';
           if (!n.topic) n.topic = 'General Notes';
         });
-        // Sort newest first
         notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         resolve(notes);
       };
@@ -132,17 +128,25 @@ class NotesStorage {
     };
   }
 
-  // ==========================================
-  // FOLDERS & TOPICS REGISTRY
-  // ==========================================
   getRegisteredFolders() {
-    const defaultData = (typeof DEFAULT_FOLDERS_STRUCTURE !== 'undefined') 
-      ? DEFAULT_FOLDERS_STRUCTURE 
-      : [
-          { folder: 'Percentages', topics: ['Profit & Loss', 'Basic Fractions to %', 'Successive Percentage', 'Discounts & Markup'] },
-          { folder: 'Calculus', topics: ['Vector Calculus', 'Limits & Derivatives', 'Integration Techniques'] },
-          { folder: 'Computer Science', topics: ['Distributed Systems', 'Caching & Redis'] }
-        ];
+    const defaultData = [
+      {
+        folder: 'Percentages',
+        topics: ['Profit & Loss', 'Basic Fractions to %', 'Successive Percentage', 'Discounts & Markup']
+      },
+      {
+        folder: 'Calculus',
+        topics: ['Vector Calculus', 'Limits & Derivatives', 'Integration Techniques', 'Stokes Theorem']
+      },
+      {
+        folder: 'Computer Science',
+        topics: ['Distributed Systems', 'Caching & Redis', 'Algorithms & Data Structures']
+      },
+      {
+        folder: 'Quantum Physics',
+        topics: ['Wave Mechanics', 'Schrödinger Equation', 'Particle in a Box']
+      }
+    ];
 
     try {
       const stored = localStorage.getItem('notes_hub_folders');
@@ -178,4 +182,4 @@ class NotesStorage {
   }
 }
 
-window.notesDB = new NotesStorage();
+export const db = new NotesStorage();

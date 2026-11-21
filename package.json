@@ -1,12 +1,21 @@
 {
-  "name": "notes-hub",
-  "version": "1.0.0",
-  "description": "Smart Notes Hub - Apple-Duolingo Hybrid UI for Photo Notes, Technical Content, and Formulae",
+  "name": "notes-hub-react",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "start": "npx serve -l 3000 .",
-    "dev": "npx serve -l 3000 ."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "keywords": ["notes", "duolingo-ui", "apple-minimalism", "katex", "technical-notes"],
-  "author": "",
-  "license": "MIT"
+  "dependencies": {
+    "katex": "^0.16.9",
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.1.4"
+  }
 }

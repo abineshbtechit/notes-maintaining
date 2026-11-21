@@ -1,20 +1,14 @@
-/**
- * Default sample notes to populate the database on initial visit
- * Featuring folder & topic organization (e.g. "Percentages" -> "Profit & Loss")
- */
+import { db } from './db.js';
 
-// Generate a clean notebook canvas for handwritten notes
 function generateSampleNotesCanvas() {
   const canvas = document.createElement('canvas');
   canvas.width = 640;
   canvas.height = 420;
   const ctx = canvas.getContext('2d');
 
-  // Background page - cream notebook
   ctx.fillStyle = '#FCFBF7';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Red margin line
   ctx.strokeStyle = '#F8B4B4';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
@@ -22,7 +16,6 @@ function generateSampleNotesCanvas() {
   ctx.lineTo(80, canvas.height);
   ctx.stroke();
 
-  // Blue ruled lines
   ctx.strokeStyle = '#E2E8F0';
   ctx.lineWidth = 1;
   for (let y = 50; y < canvas.height; y += 32) {
@@ -32,12 +25,10 @@ function generateSampleNotesCanvas() {
     ctx.stroke();
   }
 
-  // Handwritten title
   ctx.font = 'bold 22px "Comic Sans MS", "Caveat", cursive, sans-serif';
   ctx.fillStyle = '#1E293B';
   ctx.fillText('Topic: Profit, Loss & Percentage Markup', 95, 45);
 
-  // Handwritten bullet points
   ctx.font = '16px "Comic Sans MS", "Caveat", cursive, sans-serif';
   ctx.fillStyle = '#334155';
   ctx.fillText('1. Cost Price (CP) & Selling Price (SP) Essentials:', 95, 80);
@@ -47,7 +38,6 @@ function generateSampleNotesCanvas() {
   ctx.fillText('   +25% increase -> Multiply by 1.25 (5/4)', 110, 174);
   ctx.fillText('   -16.66% decrease -> Multiply by 5/6', 110, 206);
 
-  // Little handwritten diagram box
   ctx.strokeStyle = '#58CC02';
   ctx.lineWidth = 2;
   ctx.strokeRect(100, 240, 420, 105);
@@ -56,7 +46,6 @@ function generateSampleNotesCanvas() {
   ctx.fillStyle = '#0F172A';
   ctx.fillText('Net Change % = a + b + (a * b / 100)', 110, 310);
 
-  // Date stamp
   ctx.font = '13px sans-serif';
   ctx.fillStyle = '#94A3B8';
   ctx.fillText('Date: 2026-11-21', 480, 35);
@@ -64,7 +53,6 @@ function generateSampleNotesCanvas() {
   return canvas.toDataURL('image/png');
 }
 
-// Generate sample calculus canvas
 function generateCalculusNotesCanvas() {
   const canvas = document.createElement('canvas');
   canvas.width = 640;
@@ -118,7 +106,6 @@ function generateCalculusNotesCanvas() {
   return canvas.toDataURL('image/png');
 }
 
-// Generate sample formula screenshot
 function generateSampleFormulaScreenshot() {
   const canvas = document.createElement('canvas');
   canvas.width = 640;
@@ -148,26 +135,7 @@ function generateSampleFormulaScreenshot() {
   return canvas.toDataURL('image/png');
 }
 
-const DEFAULT_FOLDERS_STRUCTURE = [
-  {
-    folder: 'Percentages',
-    topics: ['Profit & Loss', 'Basic Fractions to %', 'Successive Percentage', 'Discounts & Markup']
-  },
-  {
-    folder: 'Calculus',
-    topics: ['Vector Calculus', 'Limits & Derivatives', 'Integration Techniques', 'Stokes Theorem']
-  },
-  {
-    folder: 'Computer Science',
-    topics: ['Distributed Systems', 'Caching & Redis', 'Algorithms & Data Structures']
-  },
-  {
-    folder: 'Quantum Physics',
-    topics: ['Wave Mechanics', 'Schrödinger Equation', 'Particle in a Box']
-  }
-];
-
-const SAMPLE_NOTES = [
+export const SAMPLE_NOTES = [
   {
     id: 'note-sample-pct-1',
     type: 'photo',
@@ -263,13 +231,12 @@ def get_user_profile(user_id: str) -> dict:
   }
 ];
 
-// Seed function if DB is empty
-async function seedDefaultDataIfEmpty() {
-  const count = await window.notesDB.countNotes();
+export async function seedDefaultDataIfEmpty() {
+  const count = await db.countNotes();
   if (count.total === 0) {
     for (const note of SAMPLE_NOTES) {
-      await window.notesDB.saveNote(note);
+      await db.saveNote(note);
     }
-    console.log('Sample notes with folders & topics successfully seeded.');
+    console.log('React Notes Hub: Sample notes successfully seeded.');
   }
 }
