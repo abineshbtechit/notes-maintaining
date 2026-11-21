@@ -26,8 +26,12 @@ export default function NotesLibrary({
     if (selectedFolder !== 'all' && (note.folder || 'General') !== selectedFolder) {
       return false;
     }
-    if (selectedTopic !== 'all' && (note.topic || 'General Notes') !== selectedTopic) {
-      return false;
+    if (selectedTopic !== 'all') {
+      if (selectedTopic === '__root__') {
+        if (note.topic && note.topic.trim() !== '') return false;
+      } else {
+        if ((note.topic || '') !== selectedTopic) return false;
+      }
     }
 
     // 2. Category Filter

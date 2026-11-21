@@ -14,7 +14,7 @@ export default function EditNoteModal({
 
   const [title, setTitle] = useState(note.title || '');
   const [folder, setFolder] = useState(note.folder || 'General');
-  const [topic, setTopic] = useState(note.topic || 'General Notes');
+  const [topic, setTopic] = useState(note.topic || '');
   const [tags, setTags] = useState((note.tags || []).join(', '));
   
   // Type specific
@@ -32,15 +32,15 @@ export default function EditNoteModal({
     const regFolders = db.getRegisteredFolders();
     setFolders(regFolders);
     const currFolder = regFolders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
-    setTopics(currFolder?.topics || ['General Notes']);
+    setTopics(currFolder?.topics || []);
   }, [folder]);
 
   const handleFolderChange = (newFolder) => {
     setFolder(newFolder);
     const currFolder = folders.find(f => f.folder.toLowerCase() === newFolder.toLowerCase());
-    const newTopics = currFolder?.topics || ['General Notes'];
+    const newTopics = currFolder?.topics || [];
     setTopics(newTopics);
-    setTopic(newTopics[0] || 'General Notes');
+    setTopic('');
   };
 
   const handleSubmit = async (e) => {
@@ -49,7 +49,7 @@ export default function EditNoteModal({
       ...note,
       title: title.trim(),
       folder: folder.trim() || 'General',
-      topic: topic.trim() || 'General Notes',
+      topic: topic ? topic.trim() : '',
       tags: tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
       updatedAt: new Date().toISOString()
     };
@@ -128,17 +128,17 @@ export default function EditNoteModal({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Topic *</label>
+                <label className="form-label">Topic / Sub-folder (Optional)</label>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <select
                     className="form-select"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    required
                   >
+                    <option value="">📁 None (No subfolder)</option>
                     {topics.map(t => (
                       <option key={t} value={t}>
-                        {t}
+                        🏷️ {t}
                       </option>
                     ))}
                   </select>

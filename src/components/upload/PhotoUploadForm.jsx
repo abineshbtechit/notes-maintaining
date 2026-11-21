@@ -11,7 +11,7 @@ export default function PhotoUploadForm({
 }) {
   const [title, setTitle] = useState('');
   const [folder, setFolder] = useState(folders[0]?.folder || 'Percentages');
-  const [topic, setTopic] = useState(folders[0]?.topics[0] || 'Profit & Loss');
+  const [topic, setTopic] = useState('');
   const [qualityFilter, setQualityFilter] = useState('standard');
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [notesText, setNotesText] = useState('');
@@ -20,12 +20,11 @@ export default function PhotoUploadForm({
   const fileInputRef = useRef(null);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
-  const topics = currFolderObj?.topics || ['General Notes'];
+  const topics = currFolderObj?.topics || [];
 
   const handleFolderChange = (newFolder) => {
     setFolder(newFolder);
-    const matched = folders.find(f => f.folder.toLowerCase() === newFolder.toLowerCase());
-    setTopic(matched?.topics[0] || 'General Notes');
+    setTopic('');
   };
 
   const handleFiles = (files) => {
@@ -69,7 +68,7 @@ export default function PhotoUploadForm({
       type: 'photo',
       title: title.trim(),
       folder: folder || 'General',
-      topic: topic || 'General Notes',
+      topic: topic ? topic.trim() : '',
       tags: tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
       images: [...uploadedPhotos],
       notesText: notesText.trim(),
@@ -79,7 +78,11 @@ export default function PhotoUploadForm({
     };
 
     await db.saveNote(newNote);
-    showToast(`✨ Photo Notes Saved in ${folder} → ${topic}! (+15 XP)`);
+    showToast(
+      topic
+        ? `✨ Photo Notes Saved in ${folder} → ${topic}! (+15 XP)`
+        : `✨ Photo Notes Saved in ${folder}! (+15 XP)`
+    );
 
     setTitle('');
     setUploadedPhotos([]);
@@ -145,16 +148,16 @@ export default function PhotoUploadForm({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Topic / Sub-folder *</label>
+            <label className="form-label">Topic / Sub-folder (Optional)</label>
             <div style={{ display: 'flex', gap: 6 }}>
               <select
                 className="form-select"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                required
               >
+                <option value="">📁 None (No subfolder — save in folder root)</option>
                 {topics.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>🏷️ {t}</option>
                 ))}
               </select>
               <button

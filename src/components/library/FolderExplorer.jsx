@@ -16,18 +16,22 @@ export default function FolderExplorer({
 
   notes.forEach(n => {
     const f = n.folder || 'General';
-    const t = n.topic || 'General Notes';
+    const t = n.topic ? n.topic.trim() : '';
     folderCounts[f] = (folderCounts[f] || 0) + 1;
 
     if (!topicCounts[f]) topicCounts[f] = {};
-    topicCounts[f][t] = (topicCounts[f][t] || 0) + 1;
+    if (t) {
+      topicCounts[f][t] = (topicCounts[f][t] || 0) + 1;
+    } else {
+      topicCounts[f]['__root__'] = (topicCounts[f]['__root__'] || 0) + 1;
+    }
   });
 
   registeredFolders.forEach(r => {
     if (folderCounts[r.folder] === undefined) folderCounts[r.folder] = 0;
     if (!topicCounts[r.folder]) topicCounts[r.folder] = {};
     (r.topics || []).forEach(top => {
-      if (topicCounts[r.folder][top] === undefined) topicCounts[r.folder][top] = 0;
+      if (top && topicCounts[r.folder][top] === undefined) topicCounts[r.folder][top] = 0;
     });
   });
 
@@ -64,7 +68,7 @@ export default function FolderExplorer({
             <>
               <span className="breadcrumb-separator">&gt;</span>
               <span className="breadcrumb-item active">
-                🏷️ {selectedTopic}
+                {selectedTopic === '__root__' ? '📁 Root Notes' : `🏷️ ${selectedTopic}`}
               </span>
             </>
           )}
@@ -123,16 +127,27 @@ export default function FolderExplorer({
             >
               All Topics
             </button>
-            {Object.keys(topicCounts[selectedFolder] || {}).map(tName => (
+            {topicCounts[selectedFolder]?.['__root__'] > 0 && (
               <button
-                key={tName}
                 type="button"
-                className={`topic-pill ${selectedTopic === tName ? 'active' : ''}`}
-                onClick={() => onSelectTopic(tName)}
+                className={`topic-pill ${selectedTopic === '__root__' ? 'active' : ''}`}
+                onClick={() => onSelectTopic('__root__')}
               >
-                🏷️ {tName} <span style={{ fontSize: 10, opacity: 0.7 }}>({topicCounts[selectedFolder][tName]})</span>
+                📁 Root Notes <span style={{ fontSize: 10, opacity: 0.7 }}>({topicCounts[selectedFolder]['__root__']})</span>
               </button>
-            ))}
+            )}
+            {Object.keys(topicCounts[selectedFolder] || {})
+              .filter(tName => tName !== '__root__')
+              .map(tName => (
+                <button
+                  key={tName}
+                  type="button"
+                  className={`topic-pill ${selectedTopic === tName ? 'active' : ''}`}
+                  onClick={() => onSelectTopic(tName)}
+                >
+                  🏷️ {tName} <span style={{ fontSize: 10, opacity: 0.7 }}>({topicCounts[selectedFolder][tName]})</span>
+                </button>
+              ))}
           </div>
         </div>
       )}

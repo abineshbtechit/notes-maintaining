@@ -48,7 +48,12 @@ export default function NoteCard({
       </div>
 
       <div className="note-folder-tag">
-        📁 {note.folder || 'General'} &nbsp;/&nbsp; 🏷️ {note.topic || 'General Notes'}
+        📁 {note.folder || 'General'}
+        {note.topic ? (
+          <>
+            &nbsp;/&nbsp; 🏷️ {note.topic}
+          </>
+        ) : null}
       </div>
 
       <h4 className="note-card-title">{note.title}</h4>

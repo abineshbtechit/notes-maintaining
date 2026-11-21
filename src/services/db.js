@@ -44,9 +44,13 @@ class NotesStorage {
     if (!this.db) await this.init();
     
     if (!note.folder) note.folder = note.subject || 'General';
-    if (!note.topic) note.topic = 'General Notes';
+    if (note.topic === undefined || note.topic === null) note.topic = '';
     
-    this.registerFolder(note.folder, note.topic);
+    if (note.topic) {
+      this.registerFolder(note.folder, note.topic);
+    } else {
+      this.registerFolder(note.folder);
+    }
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
@@ -69,7 +73,7 @@ class NotesStorage {
         const notes = request.result || [];
         notes.forEach(n => {
           if (!n.folder) n.folder = n.subject || 'General';
-          if (!n.topic) n.topic = 'General Notes';
+          if (n.topic === undefined || n.topic === null) n.topic = '';
         });
         notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         resolve(notes);
@@ -89,7 +93,7 @@ class NotesStorage {
         const note = request.result;
         if (note) {
           if (!note.folder) note.folder = note.subject || 'General';
-          if (!note.topic) note.topic = 'General Notes';
+          if (note.topic === undefined || note.topic === null) note.topic = '';
         }
         resolve(note);
       };
@@ -139,7 +143,7 @@ class NotesStorage {
     const note = await this.getNoteById(noteId);
     if (!note) return null;
     note.folder = targetFolder.trim();
-    note.topic = targetTopic.trim() || 'General Notes';
+    note.topic = targetTopic ? targetTopic.trim() : '';
     note.updatedAt = new Date().toISOString();
     return await this.saveNote(note);
   }

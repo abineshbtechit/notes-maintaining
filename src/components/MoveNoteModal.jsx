@@ -13,26 +13,26 @@ export default function MoveNoteModal({
 
   const [folders, setFolders] = useState([]);
   const [targetFolder, setTargetFolder] = useState(note.folder || 'Percentages');
-  const [targetTopic, setTargetTopic] = useState(note.topic || 'General Notes');
+  const [targetTopic, setTargetTopic] = useState(note.topic || '');
   const [topics, setTopics] = useState([]);
 
   useEffect(() => {
     const regFolders = db.getRegisteredFolders();
     setFolders(regFolders);
     const curr = regFolders.find(f => f.folder.toLowerCase() === targetFolder.toLowerCase());
-    const topList = curr?.topics || ['General Notes'];
+    const topList = curr?.topics || [];
     setTopics(topList);
-    if (!topList.includes(targetTopic)) {
-      setTargetTopic(topList[0] || 'General Notes');
+    if (targetTopic && !topList.includes(targetTopic)) {
+      setTargetTopic('');
     }
   }, [targetFolder]);
 
   const handleFolderChange = (newFolder) => {
     setTargetFolder(newFolder);
     const curr = folders.find(f => f.folder.toLowerCase() === newFolder.toLowerCase());
-    const topList = curr?.topics || ['General Notes'];
+    const topList = curr?.topics || [];
     setTopics(topList);
-    setTargetTopic(topList[0] || 'General Notes');
+    setTargetTopic('');
   };
 
   const handleMove = async (e) => {
@@ -40,7 +40,11 @@ export default function MoveNoteModal({
     if (!targetFolder.trim()) return;
 
     await db.moveNote(note.id, targetFolder, targetTopic);
-    showToast(`📁 Moved "${note.title}" to ${targetFolder} → ${targetTopic}!`);
+    showToast(
+      targetTopic
+        ? `📁 Moved "${note.title}" to ${targetFolder} → ${targetTopic}!`
+        : `📁 Moved "${note.title}" to ${targetFolder}!`
+    );
     onMoved();
     onClose();
   };
@@ -75,8 +79,14 @@ export default function MoveNoteModal({
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>Current:</span>
                 <strong>📁 {note.folder || 'General'}</strong>
-                <span>/</span>
-                <span>🏷️ {note.topic || 'General Notes'}</span>
+                {note.topic ? (
+                  <>
+                    <span>/</span>
+                    <span>🏷️ {note.topic}</span>
+                  </>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)' }}> (Folder Root)</span>
+                )}
               </div>
             </div>
 
@@ -112,14 +122,14 @@ export default function MoveNoteModal({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Destination Topic *</label>
+              <label className="form-label">Destination Topic / Sub-folder (Optional)</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 <select
                   className="form-select"
                   value={targetTopic}
                   onChange={(e) => setTargetTopic(e.target.value)}
-                  required
                 >
+                  <option value="">📁 None (Root of folder)</option>
                   {topics.map(t => (
                     <option key={t} value={t}>
                       🏷️ {t}

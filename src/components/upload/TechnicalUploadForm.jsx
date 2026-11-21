@@ -11,7 +11,7 @@ export default function TechnicalUploadForm({
 }) {
   const [title, setTitle] = useState('');
   const [folder, setFolder] = useState(folders[0]?.folder || 'Computer Science');
-  const [topic, setTopic] = useState(folders[0]?.topics[0] || 'Distributed Systems');
+  const [topic, setTopic] = useState('');
   const [language, setLanguage] = useState('markdown');
   const [content, setContent] = useState('');
   const [summary, setSummary] = useState('');
@@ -21,12 +21,11 @@ export default function TechnicalUploadForm({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
-  const topics = currFolderObj?.topics || ['General Notes'];
+  const topics = currFolderObj?.topics || [];
 
   const handleFolderChange = (newFolder) => {
     setFolder(newFolder);
-    const matched = folders.find(f => f.folder.toLowerCase() === newFolder.toLowerCase());
-    setTopic(matched?.topics[0] || 'General Notes');
+    setTopic('');
   };
 
   const insertSnippet = (snippet) => {
@@ -50,7 +49,7 @@ export default function TechnicalUploadForm({
       type: 'technical',
       title: title.trim(),
       folder: folder || 'General',
-      topic: topic || 'General Notes',
+      topic: topic ? topic.trim() : '',
       language,
       content: content.trim(),
       summary: summary.trim(),
@@ -61,7 +60,11 @@ export default function TechnicalUploadForm({
     };
 
     await db.saveNote(newNote);
-    showToast(`🚀 Technical Document Saved in ${folder} → ${topic}! (+20 XP)`);
+    showToast(
+      topic
+        ? `🚀 Technical Document Saved in ${folder} → ${topic}! (+20 XP)`
+        : `🚀 Technical Document Saved in ${folder}! (+20 XP)`
+    );
 
     setTitle('');
     setContent('');
@@ -140,16 +143,16 @@ export default function TechnicalUploadForm({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Topic / Sub-folder *</label>
+            <label className="form-label">Topic / Sub-folder (Optional)</label>
             <div style={{ display: 'flex', gap: 6 }}>
               <select
                 className="form-select"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                required
               >
+                <option value="">📁 None (No subfolder — save in folder root)</option>
                 {topics.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>🏷️ {t}</option>
                 ))}
               </select>
               <button

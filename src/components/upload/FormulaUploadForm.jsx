@@ -13,7 +13,7 @@ export default function FormulaUploadForm({
   const [formulaMode, setFormulaMode] = useState('latex'); // 'latex' | 'screenshot'
   const [title, setTitle] = useState('');
   const [folder, setFolder] = useState(folders[0]?.folder || 'Percentages');
-  const [topic, setTopic] = useState(folders[0]?.topics[0] || 'Successive Percentage');
+  const [topic, setTopic] = useState('');
   const [latexText, setLatexText] = useState('\\text{Net \\% Change} = a + b + \\frac{a \\cdot b}{100}');
   const [screenshotUrl, setScreenshotUrl] = useState(null);
   const [breakdown, setBreakdown] = useState('');
@@ -22,12 +22,11 @@ export default function FormulaUploadForm({
   const fileInputRef = useRef(null);
 
   const currFolderObj = folders.find(f => f.folder.toLowerCase() === folder.toLowerCase());
-  const topics = currFolderObj?.topics || ['General Notes'];
+  const topics = currFolderObj?.topics || [];
 
   const handleFolderChange = (newFolder) => {
     setFolder(newFolder);
-    const matched = folders.find(f => f.folder.toLowerCase() === newFolder.toLowerCase());
-    setTopic(matched?.topics[0] || 'General Notes');
+    setTopic('');
   };
 
   const insertSnippet = (snippet) => {
@@ -72,7 +71,7 @@ export default function FormulaUploadForm({
       type: 'formula',
       title: title.trim(),
       folder: folder || 'General',
-      topic: topic || 'General Notes',
+      topic: topic ? topic.trim() : '',
       mode: formulaMode,
       latexText: formulaMode === 'latex' ? latexText.trim() : '',
       screenshotUrl: formulaMode === 'screenshot' ? screenshotUrl : null,
@@ -83,7 +82,11 @@ export default function FormulaUploadForm({
     };
 
     await db.saveNote(newNote);
-    showToast(`📐 Formula Saved in ${folder} → ${topic}! (+25 XP)`);
+    showToast(
+      topic
+        ? `📐 Formula Saved in ${folder} → ${topic}! (+25 XP)`
+        : `📐 Formula Saved in ${folder}! (+25 XP)`
+    );
 
     setTitle('');
     setScreenshotUrl(null);
@@ -172,16 +175,16 @@ export default function FormulaUploadForm({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Topic / Sub-folder *</label>
+            <label className="form-label">Topic / Sub-folder (Optional)</label>
             <div style={{ display: 'flex', gap: 6 }}>
               <select
                 className="form-select"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                required
               >
+                <option value="">📁 None (No subfolder — save in folder root)</option>
                 {topics.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>🏷️ {t}</option>
                 ))}
               </select>
               <button

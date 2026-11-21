@@ -34,7 +34,8 @@ export default function InspectorModal({ note, onClose, onEdit, onMove, showToas
             <span className={`note-type-badge ${badgeClass}`}>{note.type.toUpperCase()}</span>
             <h3 style={{ fontSize: 20, marginTop: 6 }}>{note.title}</h3>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              📁 {note.folder || 'General'} • 🏷️ {note.topic || 'General Notes'} • {new Date(note.createdAt).toLocaleDateString()}
+              📁 {note.folder || 'General'}
+              {note.topic ? ` • 🏷️ ${note.topic}` : ''} • {new Date(note.createdAt).toLocaleDateString()}
             </span>
           </div>
           <button type="button" className="btn-icon-subtle" onClick={onClose} title="Close">
